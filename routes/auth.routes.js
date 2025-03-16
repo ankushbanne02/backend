@@ -1,13 +1,12 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-
 require("dotenv").config();
 
-
-
 const User = require("../models/user.model");
-const UserProfile = require("../models/UserProfile");
+const UserProfile = require("../models/UserProfile"); // Import the model correctly
+
+const Transaction = require("../models/Transaction");
 
 const router = express.Router();
 
@@ -53,36 +52,84 @@ router.post("/login", async (req, res) => {
   res.json({ message: "Login successful", token });
 });
 
+// Create User Profile
+router.post("/profile", async (req, res) => {
+  try {
+    const { userId, age, annualIncome, monthlyIncome, rentExpense, foodExpense, miscellaneousExpense } = req.body;
+
+    const newUserProfile = new UserProfile({
+      userId,
+      age,
+      annualIncome,
+      monthlyIncome,
+      rentExpense,
+      foodExpense,
+      miscellaneousExpense
+    });
+
+    await newUserProfile.save();
+    res.status(201).json({ message: "Profile created successfully", data: newUserProfile });
+  } catch (error) {
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
+});
+
+
+// Get All Profiles for a User
+router.get("/profiles/:userId", async (req, res) => {
+  try {
+    const profiles = await UserProfile.find({ userId: req.params.userId });
+    res.status(200).json(profiles);
+  } catch (error) {
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+
+
+
+
+// Add Transaction Route
+router.post("/transactions", async (req, res) => {
+  const { userId, title, amount, category, date } = req.body;
+
+  // Validate required fields
+  if (!userId || !title || !amount || !category) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  try {
+    // Create a new transaction
+    const newTransaction = new Transaction({
+      userId,
+      title,
+      amount,
+      category,
+      date: date || Date.now(), // Use provided date or default to current date
+    });
+
+    // Save the transaction to the database
+    await newTransaction.save();
+
+    // Return success response
+    res.status(201).json({ message: "Transaction added successfully", data: newTransaction });
+  } catch (error) {
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
+});
+
+// Get All Transactions for a User
+router.get("/transactions/:userId", async (req, res) => {
+  try {
+    const transactions = await Transaction.find({ userId: req.params.userId });
+    res.status(200).json(transactions);
+  } catch (error) {
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
+});
+
 module.exports = router;
 
 
 
-router.post("/profile", async (req, res) => {
-    try {
-        const { age, annualIncome, monthlyIncome, rentExpense, foodExpense, miscellaneousExpense } = req.body;
-
-        const newUserProfile = new UserProfile({
-            age,
-            annualIncome,
-            monthlyIncome,
-            rentExpense,
-            foodExpense,
-            miscellaneousExpense
-        });
-
-        await newUserProfile.save();
-        res.status(201).json({ message: "Profile created successfully", data: newUserProfile });
-    } catch (error) {
-        res.status(500).json({ error: "Server error", details: error.message });
-    }
-});
-
-// Get All Profiles
-router.get("/profiles", async (req, res) => {
-    try {
-        const profiles = await UserProfile.find();
-        res.status(200).json(profiles);
-    } catch (error) {
-        res.status(500).json({ error: "Server error" });
-    }
-});
+module.exports = router;
