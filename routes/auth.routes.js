@@ -1,8 +1,13 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const User = require("../models/user.model");
+
 require("dotenv").config();
+
+
+
+const User = require("../models/user.model");
+const UserProfile = require("../models/UserProfile");
 
 const router = express.Router();
 
@@ -49,3 +54,35 @@ router.post("/login", async (req, res) => {
 });
 
 module.exports = router;
+
+
+
+router.post("/profile", async (req, res) => {
+    try {
+        const { age, annualIncome, monthlyIncome, rentExpense, foodExpense, miscellaneousExpense } = req.body;
+
+        const newUserProfile = new UserProfile({
+            age,
+            annualIncome,
+            monthlyIncome,
+            rentExpense,
+            foodExpense,
+            miscellaneousExpense
+        });
+
+        await newUserProfile.save();
+        res.status(201).json({ message: "Profile created successfully", data: newUserProfile });
+    } catch (error) {
+        res.status(500).json({ error: "Server error", details: error.message });
+    }
+});
+
+// Get All Profiles
+router.get("/profiles", async (req, res) => {
+    try {
+        const profiles = await UserProfile.find();
+        res.status(200).json(profiles);
+    } catch (error) {
+        res.status(500).json({ error: "Server error" });
+    }
+});
