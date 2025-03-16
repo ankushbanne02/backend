@@ -12,16 +12,23 @@ const router = express.Router();
 
 // Register Route
 router.post("/register", async (req, res) => {
-  const { name, mobile, email, password } = req.body;
-  if (!name || !mobile || !email || !password) {
+  const { name, email, password } = req.body;
+
+  // Check for missing fields
+  if (!name || !email || !password) {
     return res.status(400).json({ message: "All fields are required" });
   }
 
   try {
+    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({ name, mobile, email, password: hashedPassword });
 
+    // Create a new user
+    const user = new User({ name, email, password: hashedPassword });
+
+    // Save the user
     await user.save();
+
     res.status(201).json({ message: "User registered successfully" });
   } catch (error) {
     res.status(400).json({ message: "User already exists" });
